@@ -152,7 +152,7 @@ window.PhotoManager = PhotoManager;
 const SyncManager = (() => {
 
   // ⚠️ GANTI dengan URL Apps Script Anda setelah deploy
-  const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyI5zn4Xphoi1zPHE_xhrhvl96SFxz5UTg-H55QU2YhN1WGvvV7YTlzjvU_uS8QNiQr/exec';
+  const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwU9nThoMLcy7XKDuKv7g_NYg9_ifmFtNxqZl03e1kAvZ9x7T58feKinEQ7Ok3kdr1h/exec';
   const API_TOKEN       = 'pmd-scn-manggarai-2026'; // Harus sama dengan di Code.gs
   const MAX_RETRIES     = 3;
   const RETRY_DELAY_MS  = 3000;
@@ -184,39 +184,78 @@ const SyncManager = (() => {
     }
   }
 
-  // ─── Kirim satu masalah ────────────────────────────────────────────────
+  // ─── Kirim satu masalah (adopsi pola TaniMap) ────────────────────────
+  //
+  // STEP 1: Kirim data teks via POST text/plain → baca response JSON
+  // STEP 2: Kirim foto satu per satu via POST no-cors → fire & forget
+  //
+  // Dua endpoint terpisah di Apps Script:
+  //   doPost() action='simpan_masalah' → terima data teks
+  //   doPost() action='upload_foto'    → terima foto, simpan ke Drive
+  //
   async function sendMasalah(masalah) {
-    // Pisahkan foto dari payload teks
-    const foto1 = masalah.foto_1_base64;
-    const foto2 = masalah.foto_2_base64;
-    const foto3 = masalah.foto_3_base64;
 
+    // ── STEP 1: Kirim data teks (tanpa foto base64) ──────────────────
     const payload = { ...masalah };
+    // Hapus foto base64 dari payload teks — dikirim terpisah
     delete payload.foto_1_base64;
     delete payload.foto_2_base64;
     delete payload.foto_3_base64;
+    // Hapus juga foto yang mungkin sudah di-embed langsung
+    delete payload.foto_1;
+    delete payload.foto_2;
+    delete payload.foto_3;
 
     payload.action = 'simpan_masalah';
     payload.token  = API_TOKEN;
 
-    // Sertakan foto jika ada
-    if (foto1) payload.foto_1 = { base64: PhotoManager.dataUrlToBase64(foto1), nama: PhotoManager.buildFileName(masalah.id, 0) };
-    if (foto2) payload.foto_2 = { base64: PhotoManager.dataUrlToBase64(foto2), nama: PhotoManager.buildFileName(masalah.id, 1) };
-    if (foto3) payload.foto_3 = { base64: PhotoManager.dataUrlToBase64(foto3), nama: PhotoManager.buildFileName(masalah.id, 2) };
-
-    // Gunakan GET+JSON untuk menghindari CORS preflight
-    const encoded  = encodeURIComponent(JSON.stringify(payload));
-    const url      = `${APPS_SCRIPT_URL}?data=${encoded}`;
-
-    const response = await fetch(url, {
-      method: 'GET',
-      mode:   'cors',
+    // POST dengan Content-Type: text/plain → tidak trigger CORS preflight
+    // Apps Script membaca via e.postData.contents di doPost()
+    const response = await fetch(APPS_SCRIPT_URL, {
+      method:  'POST',
+      headers: { 'Content-Type': 'text/plain' },
+      body:    JSON.stringify(payload),
     });
 
     if (!response.ok) throw new Error(`HTTP ${response.status}`);
-
     const result = await response.json();
     if (!result.success) throw new Error(result.message || 'Apps Script error');
+
+    // ── STEP 2: Kirim foto terpisah (fire & forget, no-cors) ─────────
+    // Sama persis dengan pola TaniMap — tidak perlu baca response foto
+    const fotoSlots = [
+      { data: masalah.foto_1_base64, index: 0 },
+      { data: masalah.foto_2_base64, index: 1 },
+      { data: masalah.foto_3_base64, index: 2 },
+    ];
+
+    for (const slot of fotoSlots) {
+      if (!slot.data) continue;
+      try {
+        const base64pure = PhotoManager.dataUrlToBase64(slot.data);
+        const filename   = PhotoManager.buildFileName(masalah.id, slot.index);
+        await fetch(APPS_SCRIPT_URL, {
+          method:  'POST',
+          mode:    'no-cors',
+          headers: { 'Content-Type': 'text/plain' },
+          body:    JSON.stringify({
+            action:       'upload_foto',
+            token:        API_TOKEN,
+            masalah_id:   masalah.id,
+            nama_file:    filename,
+            base64:       base64pure,
+            mime_type:    'image/jpeg',
+            nama_kabkota: masalah.nama_kabkota  || '',
+            nama_kec:     masalah.nama_kecamatan || '',
+            nama_desa:    masalah.nama_desa      || '',
+          }),
+        });
+        // no-cors = opaque response, tidak bisa dibaca — ini normal dan aman
+      } catch(e) {
+        // Foto gagal tidak menggagalkan keseluruhan sync data teks
+        console.warn('[Sync] Foto gagal dikirim:', e.message);
+      }
+    }
 
     return result;
   }
