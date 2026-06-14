@@ -1,0 +1,731 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="theme-color" content="#1D6B4E">
+  <meta name="description" content="Aplikasi lapangan untuk mencatat dan memetakan masalah desa">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="Peta Masalah Desa">
+
+  <title>Peta Masalah Desa</title>
+
+  <!-- Leaflet CSS -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+    integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="">
+
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+
+  <!-- App CSS -->
+  <link rel="stylesheet" href="assets/css/style.css">
+
+  <!-- PWA Manifest -->
+  <link rel="manifest" href="manifest.json">
+</head>
+<body>
+
+<div class="app-wrapper">
+
+  <!-- ═══════════════════════════════════════════════
+       HALAMAN BERANDA
+  ═══════════════════════════════════════════════ -->
+  <section id="page-beranda" class="page">
+    <header class="page-header">
+      <div class="logo-mark">
+        <svg viewBox="0 0 24 24"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg>
+      </div>
+      <div class="page-header-text">
+        <h1>Peta Masalah Desa</h1>
+        <p id="greeting-name">Aplikasi Pencatatan Lapangan</p>
+      </div>
+      <div style="margin-left:auto;display:flex;align-items:center;gap:6px;">
+        <div class="conn-indicator">
+          <div class="conn-dot online" data-conn-status></div>
+          <span style="font-size:0.7rem;color:#64748B;" data-conn-text>Online</span>
+        </div>
+      </div>
+    </header>
+
+    <div class="page-content">
+
+      <!-- Hero Banner -->
+      <div class="beranda-hero">
+        <div class="greeting">Selamat Datang</div>
+        <h2 id="greeting-name">Petugas Lapangan</h2>
+        <p>Catat masalah desa dengan cepat dan akurat, bahkan tanpa internet.</p>
+        <button class="btn btn-full" id="btn-quick-input"
+          style="background:rgba(255,255,255,0.2);backdrop-filter:blur(8px);color:#fff;border:1.5px solid rgba(255,255,255,0.4);">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 5v14M5 12h14"/></svg>
+          Catat Masalah Baru
+        </button>
+      </div>
+
+      <!-- Stats Grid -->
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-icon" style="background:#E8F5EE">
+            <svg viewBox="0 0 24 24" fill="none" stroke="#1D6B4E" stroke-width="2"><path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1"/></svg>
+          </div>
+          <div class="stat-value" id="stat-total">0</div>
+          <div class="stat-label">Total Masalah</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon" style="background:#FEF3DC">
+            <svg viewBox="0 0 24 24" fill="none" stroke="#D97706" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+          </div>
+          <div class="stat-value" id="stat-belum">0</div>
+          <div class="stat-label">Belum Terkirim</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon" style="background:#DCFCE7">
+            <svg viewBox="0 0 24 24" fill="none" stroke="#16A34A" stroke-width="2"><path d="M20 6L9 17l-5-5"/></svg>
+          </div>
+          <div class="stat-value" id="stat-terkirim">0</div>
+          <div class="stat-label">Terkirim</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon" style="background:#FEE2E2">
+            <svg viewBox="0 0 24 24" fill="none" stroke="#DC3545" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+          </div>
+          <div class="stat-value" id="stat-darurat" style="color:#DC3545">0</div>
+          <div class="stat-label">Darurat / Tinggi</div>
+        </div>
+      </div>
+
+      <!-- Top Kategori -->
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">
+            <div class="card-title-icon" style="background:#E8F5EE">
+              <svg viewBox="0 0 24 24" fill="none" stroke="#1D6B4E" stroke-width="2" width="16"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+            </div>
+            Kategori Terbanyak
+          </div>
+        </div>
+        <div id="top-kategori-list">
+          <p style="color:#94A3B8;font-size:0.8rem;text-align:center;padding:16px 0;">Belum ada data</p>
+        </div>
+      </div>
+
+      <!-- Quick Category Access -->
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">
+            <div class="card-title-icon" style="background:#FEF3DC">
+              <svg viewBox="0 0 24 24" fill="none" stroke="#D97706" stroke-width="2" width="16"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+            </div>
+            Catat Cepat
+          </div>
+        </div>
+        <div class="cat-grid">
+          <div class="cat-mini-card" data-kategori="Kesehatan"><span class="emoji">🏥</span><span class="name">Kesehatan</span></div>
+          <div class="cat-mini-card" data-kategori="Disabilitas"><span class="emoji">♿</span><span class="name">Disabilitas</span></div>
+          <div class="cat-mini-card" data-kategori="ODDP/Kesehatan Jiwa"><span class="emoji">🧠</span><span class="name">ODDP / Jiwa</span></div>
+          <div class="cat-mini-card" data-kategori="RTLH"><span class="emoji">🏚️</span><span class="name">RTLH</span></div>
+          <div class="cat-mini-card" data-kategori="Air Bersih"><span class="emoji">💧</span><span class="name">Air Bersih</span></div>
+          <div class="cat-mini-card" data-kategori="Bencana/Risiko"><span class="emoji">⚠️</span><span class="name">Bencana</span></div>
+        </div>
+      </div>
+
+      <!-- Info strip -->
+      <div style="background:#F8FAFC;border-radius:12px;padding:12px 16px;border:1px solid #E2E8F0;font-size:0.78rem;color:#64748B;line-height:1.6;">
+        💡 <strong style="color:#1D6B4E;">Mode Offline:</strong> Semua data tersimpan di perangkat ini meski tanpa internet. Sinkronisasi otomatis saat koneksi tersedia.
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════════════════════════
+       HALAMAN INPUT DATA
+  ═══════════════════════════════════════════════ -->
+  <section id="page-input" class="page">
+    <header class="page-header">
+      <div class="logo-mark">
+        <svg viewBox="0 0 24 24" fill="#fff"><path d="M12 5v14M5 12h14"/></svg>
+      </div>
+      <div class="page-header-text">
+        <h1>Input Masalah</h1>
+        <p>Catat masalah desa secara lengkap</p>
+      </div>
+    </header>
+
+    <div class="page-content">
+    <form id="form-input" onsubmit="return false;">
+
+      <!-- 1. Data Petugas -->
+      <div class="form-section">
+        <div class="form-section-title">
+          <div class="section-number">1</div>
+          Data Petugas
+        </div>
+        <div class="form-group">
+          <label for="inp-nama-petugas">Nama Petugas <span class="required">*</span></label>
+          <input type="text" id="inp-nama-petugas" class="input" placeholder="Nama lengkap petugas">
+          <div class="form-error"></div>
+        </div>
+        <div class="form-group">
+          <label for="inp-jabatan">Jabatan / Peran</label>
+          <select id="inp-jabatan" class="select">
+            <option value="">— Pilih Jabatan —</option>
+            <option>Pendamping Lapangan / CBR Worker</option>
+            <option>Kader Desa</option>
+            <option>Petugas Desa</option>
+            <option>Ketua RT/RW</option>
+            <option>Relawan</option>
+            <option>Petugas Puskesmas</option>
+            <option>Petugas Dinas Sosial</option>
+            <option>Lainnya</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="inp-hp-petugas">Nomor HP Petugas</label>
+          <input type="tel" id="inp-hp-petugas" class="input" placeholder="08xxxxxxxxxx">
+        </div>
+      </div>
+
+      <!-- 2. Data Wilayah -->
+      <div class="form-section">
+        <div class="form-section-title">
+          <div class="section-number">2</div>
+          Data Wilayah
+        </div>
+        <div class="form-group">
+          <label for="inp-provinsi">Provinsi <span class="required">*</span></label>
+          <select id="inp-provinsi" class="select"><option value="">Memuat...</option></select>
+        </div>
+        <div class="wilayah-grid">
+          <div class="form-group">
+            <label for="inp-kabkota">Kabupaten/Kota <span class="required">*</span></label>
+            <select id="inp-kabkota" class="select" disabled><option value="">— Pilih Provinsi dulu —</option></select>
+          </div>
+          <div class="form-group">
+            <label for="inp-kecamatan">Kecamatan <span class="required">*</span></label>
+            <select id="inp-kecamatan" class="select" disabled><option value="">— Pilih Kab/Kota —</option></select>
+          </div>
+        </div>
+        <div class="form-group">
+          <label for="inp-desa">Desa / Kelurahan <span class="required">*</span></label>
+          <select id="inp-desa" class="select" disabled><option value="">— Pilih Kecamatan —</option></select>
+          <div class="form-error"></div>
+          <div class="form-hint">Jika desa tidak ada, akan tersedia opsi isi manual di bawah.</div>
+        </div>
+        <input type="hidden" id="inp-nama-desa">
+        <div class="wilayah-grid">
+          <div class="form-group">
+            <label for="inp-dusun">Dusun</label>
+            <input type="text" id="inp-dusun" class="input" placeholder="Nama dusun">
+          </div>
+          <div class="form-group">
+            <label for="inp-kampung">Kampung</label>
+            <input type="text" id="inp-kampung" class="input" placeholder="Nama kampung">
+          </div>
+          <div class="form-group">
+            <label for="inp-rt">RT</label>
+            <input type="text" id="inp-rt" class="input" placeholder="001">
+          </div>
+          <div class="form-group">
+            <label for="inp-rw">RW</label>
+            <input type="text" id="inp-rw" class="input" placeholder="001">
+          </div>
+        </div>
+      </div>
+
+      <!-- 3. Lokasi GPS -->
+      <div class="form-section">
+        <div class="form-section-title">
+          <div class="section-number">3</div>
+          Lokasi GPS
+        </div>
+        <div class="gps-panel">
+          <div class="gps-status-dot" id="gps-dot"></div>
+          <div class="gps-info">
+            <div class="coords" id="gps-info">Koordinat belum diambil</div>
+            <div class="accuracy">Aktifkan GPS untuk akurasi terbaik</div>
+          </div>
+        </div>
+        <button type="button" class="btn btn-outline btn-full" id="btn-get-gps" style="margin-top:12px;">
+          📍 Ambil Lokasi Saat Ini
+        </button>
+        <div class="form-hint" style="margin-top:8px;">Jika GPS gagal, isi koordinat manual:</div>
+        <div class="wilayah-grid">
+          <div class="form-group">
+            <label for="inp-lat">Latitude</label>
+            <input type="number" id="inp-lat" class="input" placeholder="-8.619400" step="any">
+          </div>
+          <div class="form-group">
+            <label for="inp-lng">Longitude</label>
+            <input type="number" id="inp-lng" class="input" placeholder="120.473000" step="any">
+          </div>
+        </div>
+        <div class="form-group">
+          <label for="inp-akurasi">Akurasi GPS (meter)</label>
+          <input type="number" id="inp-akurasi" class="input" placeholder="0" readonly>
+        </div>
+      </div>
+
+      <!-- 4. Kategori Masalah -->
+      <div class="form-section">
+        <div class="form-section-title">
+          <div class="section-number">4</div>
+          Kategori Masalah
+        </div>
+        <div class="form-group">
+          <label for="inp-kategori">Kategori <span class="required">*</span></label>
+          <select id="inp-kategori" class="select"><option value="">— Pilih Kategori —</option></select>
+          <div class="form-error"></div>
+        </div>
+        <div class="form-group">
+          <label for="inp-subkategori">Subkategori</label>
+          <select id="inp-subkategori" class="select" disabled><option value="">— Pilih Kategori dulu —</option></select>
+        </div>
+      </div>
+
+      <!-- 5. Detail Masalah -->
+      <div class="form-section">
+        <div class="form-section-title">
+          <div class="section-number">5</div>
+          Detail Masalah
+        </div>
+        <div class="form-group">
+          <label for="inp-judul">Judul Masalah <span class="required">*</span></label>
+          <input type="text" id="inp-judul" class="input" placeholder="Ringkasan singkat masalah">
+          <div class="form-error"></div>
+        </div>
+        <div class="form-group">
+          <label for="inp-deskripsi">Deskripsi Masalah <span class="required">*</span></label>
+          <textarea id="inp-deskripsi" class="textarea" rows="4" placeholder="Jelaskan masalah secara detail: kondisi saat ini, dampak, lama terjadi, dll."></textarea>
+          <div class="form-error"></div>
+        </div>
+        <div class="form-group">
+          <label>Tingkat Urgensi <span class="required">*</span></label>
+          <div class="urgensi-grid">
+            <label class="urgensi-option rendah">
+              <input type="radio" name="urgensi" id="inp-urgensi" value="rendah"> 🔵 Rendah
+            </label>
+            <label class="urgensi-option sedang">
+              <input type="radio" name="urgensi" value="sedang"> 🟡 Sedang
+            </label>
+            <label class="urgensi-option tinggi">
+              <input type="radio" name="urgensi" value="tinggi"> 🔴 Tinggi
+            </label>
+            <label class="urgensi-option darurat" style="grid-column:span 2">
+              <input type="radio" name="urgensi" value="darurat"> 🚨 DARURAT — Butuh Penanganan Segera
+            </label>
+          </div>
+          <div class="form-error" id="urgensi-error"></div>
+        </div>
+        <div class="form-group">
+          <label for="inp-status-masalah">Status Masalah</label>
+          <select id="inp-status-masalah" class="select">
+            <option value="baru">🆕 Baru</option>
+            <option value="tindak">🔄 Dalam Tindak Lanjut</option>
+            <option value="selesai">✅ Selesai</option>
+            <option value="eskalasi">⬆️ Butuh Eskalasi</option>
+            <option value="invalid">❌ Tidak Valid</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- 6. Data Warga -->
+      <div class="form-section">
+        <div class="form-section-title">
+          <div class="section-number">6</div>
+          Data Warga Terkait
+        </div>
+        <div class="form-hint" style="margin-bottom:12px;">Opsional — isi jika masalah terkait dengan individu tertentu</div>
+        <div class="form-group">
+          <label for="inp-nama-warga">Nama Warga</label>
+          <input type="text" id="inp-nama-warga" class="input" placeholder="Nama lengkap warga">
+        </div>
+        <div class="wilayah-grid">
+          <div class="form-group">
+            <label for="inp-jenis-kelamin">Jenis Kelamin</label>
+            <select id="inp-jenis-kelamin" class="select">
+              <option value="">— Pilih —</option>
+              <option>Laki-laki</option>
+              <option>Perempuan</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="inp-umur">Umur (tahun)</label>
+            <input type="number" id="inp-umur" class="input" placeholder="0" min="0" max="150">
+          </div>
+        </div>
+        <div class="form-group">
+          <label for="inp-nik">NIK (opsional)</label>
+          <input type="text" id="inp-nik" class="input" placeholder="16 digit NIK" maxlength="16">
+          <div class="form-hint">NIK tidak akan ditampilkan secara publik</div>
+        </div>
+        <div class="form-group">
+          <label for="inp-kelompok-rentan">Kelompok Rentan</label>
+          <select id="inp-kelompok-rentan" class="select">
+            <option value="">— Pilih —</option>
+            <option>Anak</option>
+            <option>Lansia</option>
+            <option>Penyandang Disabilitas</option>
+            <option>ODDP / Kesehatan Jiwa</option>
+            <option>Ibu Hamil</option>
+            <option>Keluarga Miskin</option>
+            <option>Korban Bencana</option>
+            <option>Tidak Ada</option>
+            <option>Lainnya</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="inp-jumlah-terdampak">Jumlah Orang Terdampak</label>
+          <input type="number" id="inp-jumlah-terdampak" class="input" placeholder="1" min="1">
+        </div>
+      </div>
+
+      <!-- 7. Foto -->
+      <div class="form-section">
+        <div class="form-section-title">
+          <div class="section-number">7</div>
+          Foto / Dokumentasi
+        </div>
+        <div class="form-hint" style="margin-bottom:12px;">Maks 3 foto. Foto akan dikompres otomatis (≤300KB/foto) dan dikirim ke Google Drive saat sinkronisasi.</div>
+        <div class="photo-grid">
+          <div class="photo-slot" id="photo-slot-0">
+            <div class="upload-icon" style="display:flex;flex-direction:column;align-items:center;gap:4px;">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+              <span>Foto 1</span>
+            </div>
+            <button type="button" class="remove-photo">✕</button>
+            <input type="file" id="photo-inp-0" accept="image/*" capture="environment" style="display:none">
+          </div>
+          <div class="photo-slot" id="photo-slot-1">
+            <div class="upload-icon" style="display:flex;flex-direction:column;align-items:center;gap:4px;">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+              <span>Foto 2</span>
+            </div>
+            <button type="button" class="remove-photo">✕</button>
+            <input type="file" id="photo-inp-1" accept="image/*" capture="environment" style="display:none">
+          </div>
+          <div class="photo-slot" id="photo-slot-2">
+            <div class="upload-icon" style="display:flex;flex-direction:column;align-items:center;gap:4px;">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+              <span>Foto 3</span>
+            </div>
+            <button type="button" class="remove-photo">✕</button>
+            <input type="file" id="photo-inp-2" accept="image/*" capture="environment" style="display:none">
+          </div>
+        </div>
+      </div>
+
+      <!-- 8. Tindak Lanjut -->
+      <div class="form-section">
+        <div class="form-section-title">
+          <div class="section-number">8</div>
+          Tindak Lanjut
+        </div>
+        <div class="form-group">
+          <label for="inp-tindakan-awal">Tindakan Awal yang Sudah Dilakukan</label>
+          <textarea id="inp-tindakan-awal" class="textarea" rows="2" placeholder="Contoh: sudah dilaporkan ke kepala desa, sudah dikunjungi puskesmas..."></textarea>
+        </div>
+        <div class="form-group">
+          <label for="inp-rekomendasi">Rekomendasi Tindak Lanjut</label>
+          <textarea id="inp-rekomendasi" class="textarea" rows="2" placeholder="Tindakan yang perlu dilakukan oleh siapa..."></textarea>
+        </div>
+        <div class="form-group">
+          <label for="inp-instansi">Instansi / Pihak yang Perlu Terlibat</label>
+          <input type="text" id="inp-instansi" class="input" placeholder="Puskesmas, Dinsos, BPD, dll.">
+        </div>
+        <div class="form-group">
+          <label for="inp-tanggal-rencana">Tanggal Rencana Tindak Lanjut</label>
+          <input type="date" id="inp-tanggal-rencana" class="input">
+        </div>
+        <div class="form-group">
+          <label for="inp-catatan">Catatan Tambahan</label>
+          <textarea id="inp-catatan" class="textarea" rows="2" placeholder="Catatan lain yang perlu diketahui..."></textarea>
+        </div>
+      </div>
+
+      <!-- Submit -->
+      <div style="display:flex;flex-direction:column;gap:10px;">
+        <button type="button" class="btn btn-primary btn-lg btn-full" id="btn-save-masalah">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13"/><polyline points="7 3 7 8 15 8"/></svg>
+          Simpan Data Masalah
+        </button>
+        <p style="text-align:center;font-size:0.75rem;color:#94A3B8;">
+          Data tersimpan offline otomatis dan akan dikirim ke server saat ada koneksi internet.
+        </p>
+      </div>
+
+    </form>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════════════════════════
+       HALAMAN DAFTAR DATA
+  ═══════════════════════════════════════════════ -->
+  <section id="page-data" class="page">
+    <header class="page-header">
+      <div class="logo-mark" style="background:#3B82F6;">
+        <svg viewBox="0 0 24 24" fill="#fff"><path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2M9 5a2 2 0 0 0 2 2h2a2 2 0 0 0 2-2M9 5a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2"/></svg>
+      </div>
+      <div class="page-header-text">
+        <h1>Daftar Data</h1>
+        <p>Semua masalah yang telah dicatat</p>
+      </div>
+    </header>
+
+    <div class="page-content">
+      <!-- Search -->
+      <div class="search-bar">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+        <input type="text" id="search-input" class="input" placeholder="Cari masalah, desa, deskripsi...">
+      </div>
+
+      <!-- Filter Kategori -->
+      <div class="filter-bar">
+        <div class="filter-chip active" data-filter-type="kategori" data-filter-value="semua">Semua</div>
+        <div class="filter-chip" data-filter-type="kategori" data-filter-value="Kesehatan">🏥 Kesehatan</div>
+        <div class="filter-chip" data-filter-type="kategori" data-filter-value="Disabilitas">♿ Disabilitas</div>
+        <div class="filter-chip" data-filter-type="kategori" data-filter-value="RTLH">🏚️ RTLH</div>
+        <div class="filter-chip" data-filter-type="kategori" data-filter-value="Air Bersih">💧 Air Bersih</div>
+        <div class="filter-chip" data-filter-type="kategori" data-filter-value="Bencana/Risiko">⚠️ Bencana</div>
+      </div>
+
+      <!-- Filter Urgensi & Sync -->
+      <div style="display:flex;gap:8px;overflow-x:auto;scrollbar-width:none;">
+        <div class="filter-bar" style="flex:1">
+          <div class="filter-chip active" data-filter-type="urgensi" data-filter-value="semua">Semua Urgensi</div>
+          <div class="filter-chip" data-filter-type="urgensi" data-filter-value="darurat">🚨 Darurat</div>
+          <div class="filter-chip" data-filter-type="urgensi" data-filter-value="tinggi">🔴 Tinggi</div>
+          <div class="filter-chip" data-filter-type="urgensi" data-filter-value="sedang">🟡 Sedang</div>
+          <div class="filter-chip" data-filter-type="urgensi" data-filter-value="rendah">🔵 Rendah</div>
+        </div>
+      </div>
+
+      <div class="filter-bar">
+        <div class="filter-chip active" data-filter-type="sync" data-filter-value="semua">Semua Status</div>
+        <div class="filter-chip" data-filter-type="sync" data-filter-value="belum">Belum Terkirim</div>
+        <div class="filter-chip" data-filter-type="sync" data-filter-value="terkirim">✅ Terkirim</div>
+        <div class="filter-chip" data-filter-type="sync" data-filter-value="gagal">❌ Gagal</div>
+      </div>
+
+      <!-- Data list -->
+      <div id="data-list">
+        <div class="empty-state">
+          <div class="empty-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1"/></svg>
+          </div>
+          <h3>Belum ada data</h3>
+          <p>Mulai catat masalah desa dengan menekan tombol Input Data.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════════════════════════
+       HALAMAN PETA
+  ═══════════════════════════════════════════════ -->
+  <section id="page-peta" class="page">
+    <header class="page-header">
+      <div class="logo-mark" style="background:#16A34A;">
+        <svg viewBox="0 0 24 24" fill="#fff"><path d="M3 11l19-9-9 19-2-8-8-2z"/></svg>
+      </div>
+      <div class="page-header-text">
+        <h1>Peta Masalah</h1>
+        <p id="map-marker-count">Memuat data...</p>
+      </div>
+    </header>
+
+    <div class="page-content" style="padding:12px;">
+      <!-- Filter peta -->
+      <div class="filter-bar" style="margin-bottom:8px;">
+        <div class="filter-chip active" id="map-filter-semua">Semua</div>
+        <div class="filter-chip" id="map-filter-darurat">🚨 Darurat</div>
+        <div class="filter-chip" id="map-filter-tinggi">🔴 Tinggi</div>
+        <div class="filter-chip" id="map-filter-sedang">🟡 Sedang</div>
+      </div>
+
+      <!-- Legenda -->
+      <div style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:8px;font-size:0.72rem;font-family:'Plus Jakarta Sans',sans-serif;font-weight:600;">
+        <span style="display:flex;align-items:center;gap:4px;"><span style="width:12px;height:12px;border-radius:50%;background:#7F1D1D;display:inline-block;"></span>Darurat</span>
+        <span style="display:flex;align-items:center;gap:4px;"><span style="width:12px;height:12px;border-radius:50%;background:#EF4444;display:inline-block;"></span>Tinggi</span>
+        <span style="display:flex;align-items:center;gap:4px;"><span style="width:12px;height:12px;border-radius:50%;background:#F59E0B;display:inline-block;"></span>Sedang</span>
+        <span style="display:flex;align-items:center;gap:4px;"><span style="width:12px;height:12px;border-radius:50%;background:#0EA5E9;display:inline-block;"></span>Rendah</span>
+      </div>
+
+      <!-- Map container -->
+      <div id="map-container"></div>
+
+      <!-- Offline note -->
+      <div id="map-offline-notice" style="display:none;background:#FEF3DC;border-radius:10px;padding:12px;font-size:0.78rem;color:#92400E;margin-top:8px;">
+        ⚠️ Peta membutuhkan koneksi internet. Data koordinat tersimpan dan akan ditampilkan saat online.
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════════════════════════
+       HALAMAN SINKRONISASI
+  ═══════════════════════════════════════════════ -->
+  <section id="page-sinkronisasi" class="page">
+    <header class="page-header">
+      <div class="logo-mark" style="background:#F59E0B;">
+        <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5"><path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16"/><path d="M16 16h5v5"/></svg>
+      </div>
+      <div class="page-header-text">
+        <h1>Sinkronisasi</h1>
+        <p>Kirim data ke server</p>
+      </div>
+    </header>
+
+    <div class="page-content">
+
+      <!-- Connection status -->
+      <div id="sync-conn-bar" class="sync-status-bar online">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12.55a11 11 0 0 1 14.08 0"/><path d="M1.42 9a16 16 0 0 1 21.16 0"/><path d="M8.53 16.11a6 6 0 0 1 6.95 0"/><line x1="12" y1="20" x2="12.01" y2="20"/></svg>
+        <span data-conn-text>Terhubung ke Internet</span>
+      </div>
+
+      <!-- Statistik sync -->
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-value" id="sync-total">0</div>
+          <div class="stat-label">Total Data</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value" id="sync-terkirim" style="color:#16A34A">0</div>
+          <div class="stat-label">Terkirim</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value" id="sync-belum" style="color:#F59E0B">0</div>
+          <div class="stat-label">Belum Terkirim</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value" id="sync-gagal" style="color:#DC3545">0</div>
+          <div class="stat-label">Gagal</div>
+        </div>
+      </div>
+
+      <!-- Tombol sinkronisasi -->
+      <button class="btn btn-primary btn-lg btn-full" id="btn-sync-now">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16"/><path d="M16 16h5v5"/></svg>
+        Sinkronkan Sekarang
+      </button>
+
+      <!-- Antrian sinkronisasi -->
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">
+            <div class="card-title-icon" style="background:#FEF3DC">
+              <svg viewBox="0 0 24 24" fill="none" stroke="#D97706" stroke-width="2" width="16"><path d="M3 6h18M3 12h18M3 18h18"/></svg>
+            </div>
+            Antrian Pengiriman
+          </div>
+          <span id="sync-menunggu" class="badge badge-sync-menunggu">0</span>
+        </div>
+        <div id="sync-queue-list" style="display:flex;flex-direction:column;gap:8px;">
+          <div class="empty-state" style="padding:24px 0;">
+            <div class="empty-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M20 6L9 17l-5-5"/></svg></div>
+            <h3>Antrian kosong</h3>
+            <p>Semua data telah terkirim.</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Info teknis -->
+      <div class="card" style="border-left:4px solid #1D6B4E;">
+        <div style="font-family:'Plus Jakarta Sans',sans-serif;font-size:0.8rem;font-weight:700;color:#1D6B4E;margin-bottom:8px;">⚙️ Cara Kerja Sinkronisasi</div>
+        <ul style="font-size:0.78rem;color:#475569;line-height:1.8;padding-left:16px;">
+          <li>Data teks dikirim ke <strong>Google Sheet</strong> via Apps Script</li>
+          <li>Foto dikirim ke <strong>Google Drive</strong> (folder per desa)</li>
+          <li>Link foto otomatis masuk ke Google Sheet</li>
+          <li>Jika gagal, sistem otomatis retry hingga 3x</li>
+          <li>Data offline aman tersimpan di perangkat</li>
+        </ul>
+      </div>
+
+      <!-- Konfigurasi URL -->
+      <div class="card">
+        <div style="font-family:'Plus Jakarta Sans',sans-serif;font-size:0.8rem;font-weight:700;color:#334155;margin-bottom:8px;">🔗 Konfigurasi Server</div>
+        <div style="font-size:0.75rem;color:#64748B;margin-bottom:8px;">URL Apps Script (ganti di assets/js/sync.js):</div>
+        <div style="background:#F8FAFC;border:1px solid #E2E8F0;border-radius:8px;padding:10px;font-family:monospace;font-size:0.7rem;color:#475569;word-break:break-all;">
+          script.google.com/macros/s/DEPLOYMENT_ID/exec
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════════════════════════
+       BOTTOM NAVIGATION
+  ═══════════════════════════════════════════════ -->
+  <nav class="bottom-nav">
+    <button class="nav-item active" data-page="beranda">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+      Beranda
+    </button>
+    <button class="nav-item" data-page="input">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>
+      Input
+    </button>
+    <button class="nav-item" data-page="data">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1"/></svg>
+      Data
+    </button>
+    <button class="nav-item" data-page="peta">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="3 6 9 3 15 6 21 3 21 18 15 21 9 18 3 21"/><line x1="9" y1="3" x2="9" y2="18"/><line x1="15" y1="6" x2="15" y2="21"/></svg>
+      Peta
+    </button>
+    <button class="nav-item" data-page="sinkronisasi">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16"/><path d="M16 16h5v5"/></svg>
+      Sinkron
+      <span class="nav-badge" id="sync-nav-badge" style="display:none;">0</span>
+    </button>
+  </nav>
+
+  <!-- Modal -->
+  <div id="modal-overlay" class="modal-overlay">
+    <div class="modal">
+      <div class="modal-handle"></div>
+      <div class="modal-title"></div>
+      <div class="modal-body"></div>
+      <div class="modal-actions"></div>
+    </div>
+  </div>
+
+  <!-- Toast Container -->
+  <div id="toast-container"></div>
+
+</div><!-- /app-wrapper -->
+
+<!-- Scripts -->
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+  integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV/XN/WPeE=" crossorigin=""></script>
+<script src="assets/js/wilayah.js"></script>
+<script src="assets/js/storage.js"></script>
+<script src="assets/js/sync.js"></script>
+<script src="assets/js/map.js"></script>
+<script src="assets/js/app.js"></script>
+
+<!-- Peta filter logic -->
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+    ['semua','darurat','tinggi','sedang'].forEach(f => {
+      document.getElementById(`map-filter-${f}`)?.addEventListener('click', function() {
+        document.querySelectorAll('#page-peta .filter-chip').forEach(c => c.classList.remove('active'));
+        this.classList.add('active');
+        const filterFn = f === 'semua' ? null : (m => m.urgensi === f);
+        MapManager.loadMarkers(filterFn).then(count => {
+          const el = document.getElementById('map-marker-count');
+          if (el) el.textContent = `${count} lokasi masalah`;
+        });
+      });
+    });
+
+    // Update conn bar on sync page
+    const bar = document.getElementById('sync-conn-bar');
+    window.addEventListener('online',  () => bar && (bar.className = 'sync-status-bar online'));
+    window.addEventListener('offline', () => bar && (bar.className = 'sync-status-bar offline'));
+  });
+</script>
+
+</body>
+</html>
