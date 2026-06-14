@@ -779,7 +779,7 @@ const AppState = (() => {
   // ─── Init ─────────────────────────────────────────────────────────────
   async function init() {
     await StorageManager.init();
-    await WilayahManager.init(); // Preload wilayah.json
+    WilayahManager.init(); // Data sudah embed, langsung siap
 
     // Modal close
     document.getElementById('modal-overlay')?.addEventListener('click', (e) => {
