@@ -193,43 +193,44 @@
           <div class="section-number">2</div>
           Data Wilayah
         </div>
-        <div class="form-group">
-          <label for="inp-provinsi">Provinsi <span class="required">*</span></label>
-          <select id="inp-provinsi" class="select"><option value="">Memuat...</option></select>
+
+        <!-- Info sumber data wilayah -->
+        <div class="wilayah-source-info">
+          <span class="wilayah-source-icon">🏛️</span>
+          <span id="wilayah-versi">Memuat data wilayah...</span>
         </div>
-        <div class="wilayah-grid">
-          <div class="form-group">
-            <label for="inp-kabkota">Kabupaten/Kota <span class="required">*</span></label>
-            <select id="inp-kabkota" class="select" disabled><option value="">— Pilih Provinsi dulu —</option></select>
-          </div>
-          <div class="form-group">
-            <label for="inp-kecamatan">Kecamatan <span class="required">*</span></label>
-            <select id="inp-kecamatan" class="select" disabled><option value="">— Pilih Kab/Kota —</option></select>
-          </div>
+
+        <!-- Cascading resmi: Kab → Kec → Desa (dari wilayah.json Kepmendagri) -->
+        <div class="form-group">
+          <label for="inp-kabkota">Kabupaten/Kota <span class="required">*</span></label>
+          <select id="inp-kabkota" class="select"><option value="">— Pilih Kabupaten/Kota —</option></select>
+        </div>
+        <div class="form-group">
+          <label for="inp-kecamatan">Kecamatan <span class="required">*</span></label>
+          <select id="inp-kecamatan" class="select" disabled><option value="">— Pilih Kecamatan —</option></select>
         </div>
         <div class="form-group">
           <label for="inp-desa">Desa / Kelurahan <span class="required">*</span></label>
-          <select id="inp-desa" class="select" disabled><option value="">— Pilih Kecamatan —</option></select>
-          <div class="form-error"></div>
-          <div class="form-hint">Jika desa tidak ada, akan tersedia opsi isi manual di bawah.</div>
+          <select id="inp-desa" class="select" disabled><option value="">— Pilih Desa/Kelurahan —</option></select>
+          <div class="form-hint" style="margin-top:4px;font-size:0.78rem;color:#64748B;">
+            Data resmi: Kepmendagri 2025 · Desa (kode 2xxx) dan Kelurahan (kode 1xxx)
+          </div>
         </div>
-        <input type="hidden" id="inp-nama-desa">
+
+        <!-- Field manual: Dusun/Kampung/RT/RW (isi bebas, tidak dari data nasional) -->
+        <div class="wilayah-manual-label">Lokasi Detail <span style="font-weight:400;font-size:0.8rem;color:#94A3B8;">(isi manual)</span></div>
         <div class="wilayah-grid">
           <div class="form-group">
-            <label for="inp-dusun">Dusun</label>
-            <input type="text" id="inp-dusun" class="input" placeholder="Nama dusun">
-          </div>
-          <div class="form-group">
-            <label for="inp-kampung">Kampung</label>
-            <input type="text" id="inp-kampung" class="input" placeholder="Nama kampung">
+            <label for="inp-dusun">Dusun / Kampung</label>
+            <input type="text" id="inp-dusun" class="input" placeholder="cth: Dusun Wae Ntaung">
           </div>
           <div class="form-group">
             <label for="inp-rt">RT</label>
-            <input type="text" id="inp-rt" class="input" placeholder="001">
+            <input type="text" id="inp-rt" class="input" placeholder="001" maxlength="10">
           </div>
           <div class="form-group">
             <label for="inp-rw">RW</label>
-            <input type="text" id="inp-rw" class="input" placeholder="001">
+            <input type="text" id="inp-rw" class="input" placeholder="001" maxlength="10">
           </div>
         </div>
       </div>
